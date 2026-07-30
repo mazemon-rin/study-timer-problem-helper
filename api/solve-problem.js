@@ -2,12 +2,14 @@ import { GoogleGenAI } from "@google/genai";
 
 const MODEL = process.env.GEMINI_MODEL || "gemini-3.5-flash";
 const FALLBACK_MODEL = "gemini-3.1-flash-lite";
+const ALLOWED_MODELS = new Set(["gemini-3.5-flash", FALLBACK_MODEL]);
 const prompt = `高校生向けの学習支援AIです。画像の問題を慎重に読み取り、読めない情報は推測せず、必ずJSONだけで返してください。形式: {"readable":true,"subject":"","topic":"","problemText":"","missingInformation":[],"hint":"","steps":[],"finalAnswer":"","explanation":"","confidenceNote":""}`;
 
 export default async function handler(request, response) {
   if (request.method !== "POST") return response.status(405).send("Method Not Allowed");
   try {
     const body = request.body || {};
+    const selectedModel = ALLOWED_MODELS.has(body.model) ? body.model : MODEL;
     const image = String(body.image || "");
     const match = image.match(/^data:(image\/[a-zA-Z0-9.+-]+);base64,(.+)$/);
     if (!match || match[2].length > 8_000_000) return response.status(413).json({ error: "画像が大きすぎるか、形式に対応していません" });
@@ -25,9 +27,9 @@ export default async function handler(request, response) {
     };
     let result;
     try {
-      result = await ai.models.generateContent({ ...generationRequest, model: MODEL });
+      result = await ai.models.generateContent({ ...generationRequest, model: selectedModel });
     } catch (error) {
-      if (!/503|high demand|unavailable/i.test(String(error?.message || "")) || MODEL === FALLBACK_MODEL) throw error;
+      if (!/503|high demand|unavailable/i.test(String(error?.message || "")) || selectedModel === FALLBACK_MODEL) throw error;
       console.warn(`Gemini model busy; retrying with ${FALLBACK_MODEL}`);
       result = await ai.models.generateContent({ ...generationRequest, model: FALLBACK_MODEL });
     }
@@ -43,7 +45,7 @@ export default async function handler(request, response) {
     // APIキー自体は返さず、設定確認に必要な原因だけを分類します。
     let errorMessage = "Gemini APIとの通信に失敗しました。Vercelの設定を確認してください";
     if (/not found|not supported|model/i.test(message)) {
-      errorMessage = `Geminiモデルを利用できません。GEMINI_MODELを「${MODEL}」に設定してください`;
+      errorMessage = `Geminiモデルを利用できません。GEMINI_MODELを「${selectedModel || MODEL}」に設定してください`;
     } else if (/api key|permission|unauthorized|401|403/i.test(message)) {
       errorMessage = "Gemini APIキーが無効、またはAPIの利用権限がありません。VercelのProduction環境変数を確認してください";
     } else if (/quota|rate limit|429|resource exhausted/i.test(message)) {
