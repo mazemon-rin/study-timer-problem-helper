@@ -23,3 +23,8 @@
 ## 将来の統合
 
 保存データには `schemaVersion` と `sourceApp` を付けています。将来、Study Tracker側でこの形式を読み込む変換処理を追加すれば、学習記録・問題履歴を統合できます。既存アプリのLocalStorageキーとは分離しています。
+
+
+## Vercel公開
+
+GitHubリポジトリをVercelへImportし、Environment Variablesに `GEMINI_API_KEY` と `GEMINI_MODEL=gemini-3.5-flash` を登録します。Vercel Functionsは `api/solve-problem.js` です。
