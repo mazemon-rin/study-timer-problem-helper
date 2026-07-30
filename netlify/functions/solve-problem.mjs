@@ -12,6 +12,7 @@ export default async (request) => {
     if (!match || match[2].length > 8_000_000) {
       return Response.json({ error: "画像が大きすぎるか、形式に対応していません" }, { status: 413 });
     }
+    if (!process.env.GEMINI_API_KEY) return Response.json({ error: "NetlifyにGEMINI_API_KEYが登録されていません" }, { status: 500 });
     const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
     const result = await ai.models.generateContent({
       model: MODEL,
@@ -30,7 +31,11 @@ export default async (request) => {
     if (start < 0 || end <= start) throw new Error("Gemini returned no JSON");
     return Response.json(JSON.parse(raw.slice(start, end + 1)));
   } catch (error) {
-    console.error("solve-problem failed:", error?.message || "unknown error");
-    return Response.json({ error: "問題を解析できませんでした。API設定と画像を確認してください" }, { status: 500 });
+    const message = String(error?.message || "");
+    console.error("solve-problem failed:", message);
+    if (/401|403|API key|API_KEY|permission|unauthorized/i.test(message)) return Response.json({ error: "Gemini APIキーが拒否されました。キーを確認してください" }, { status: 502 });
+    if (/404|not found|model/i.test(message)) return Response.json({ error: "Geminiモデルを利用できません。GEMINI_MODELを確認してください" }, { status: 502 });
+    if (/JSON|parse/i.test(message)) return Response.json({ error: "Geminiの返答を読み取れませんでした。もう一度試してください" }, { status: 502 });
+    return Response.json({ error: "Gemini APIとの通信に失敗しました。Netlifyの設定を確認してください" }, { status: 502 });
   }
 };
