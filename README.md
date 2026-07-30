@@ -27,4 +27,4 @@
 
 ## Vercel公開
 
-GitHubリポジトリをVercelへImportし、Environment Variablesに `GEMINI_API_KEY` と `GEMINI_MODEL=gemini-2.5-flash` を登録します。Vercel Functionsは `api/solve-problem.js` です。
+GitHubリポジトリをVercelへImportし、Environment Variablesに `GEMINI_API_KEY` と `GEMINI_MODEL=gemini-3.5-flash` を登録します。Vercel Functionsは `api/solve-problem.js` です。
