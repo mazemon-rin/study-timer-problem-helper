@@ -1,6 +1,7 @@
 import { GoogleGenAI } from "@google/genai";
 
 const MODEL = process.env.GEMINI_MODEL || "gemini-3.5-flash";
+const FALLBACK_MODEL = "gemini-3.1-flash-lite";
 const prompt = `高校生向けの学習支援AIです。画像の問題を慎重に読み取り、読めない情報は推測せず、必ずJSONだけで返してください。形式: {"readable":true,"subject":"","topic":"","problemText":"","missingInformation":[],"hint":"","steps":[],"finalAnswer":"","explanation":"","confidenceNote":""}`;
 
 export default async function handler(request, response) {
@@ -12,14 +13,21 @@ export default async function handler(request, response) {
     if (!match || match[2].length > 8_000_000) return response.status(413).json({ error: "画像が大きすぎるか、形式に対応していません" });
     if (!process.env.GEMINI_API_KEY) return response.status(500).json({ error: "VercelにGEMINI_API_KEYが登録されていません" });
     const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-    const result = await ai.models.generateContent({
-      model: MODEL,
+    const request = {
       config: { responseMimeType: "application/json" },
       contents: [{ role: "user", parts: [
         { text: `${prompt} 科目:${body.subject || "AIに判断してもらう"}` },
         { inlineData: { mimeType: match[1], data: match[2] } }
       ] }]
-    });
+    };
+    let result;
+    try {
+      result = await ai.models.generateContent({ ...request, model: MODEL });
+    } catch (error) {
+      if (!/503|high demand|unavailable/i.test(String(error?.message || "")) || MODEL === FALLBACK_MODEL) throw error;
+      console.warn(`Gemini model busy; retrying with ${FALLBACK_MODEL}`);
+      result = await ai.models.generateContent({ ...request, model: FALLBACK_MODEL });
+    }
     const raw = String(result.text || "").trim();
     const start = raw.indexOf("{");
     const end = raw.lastIndexOf("}");
