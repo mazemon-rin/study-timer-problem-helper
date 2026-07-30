@@ -16,7 +16,10 @@ export default async function handler(request, response) {
     const generationRequest = {
       config: { responseMimeType: "application/json" },
       contents: [{ role: "user", parts: [
-        { text: `${prompt} 科目:${body.subject || "AIに判断してもらう"}` },
+        { text: `${prompt} 科目:${body.subject || "AIに判断してもらう"}${body.followUp ? `
+元の回答:${JSON.stringify(body.answer || {})}
+追加質問:${body.followUp}
+追加質問には、元の問題と回答を踏まえて日本語で答えてください。` : ""}` },
         { inlineData: { mimeType: match[1], data: match[2] } }
       ] }]
     };
