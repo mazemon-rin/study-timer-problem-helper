@@ -26,7 +26,20 @@ export default async function handler(request, response) {
     if (start < 0 || end <= start) throw new Error("Gemini returned no JSON");
     return response.status(200).json(JSON.parse(raw.slice(start, end + 1)));
   } catch (error) {
-    console.error("solve-problem failed:", error?.message || "unknown error");
-    return response.status(502).json({ error: "Gemini APIとの通信に失敗しました。Vercelの設定を確認してください" });
+    const message = String(error?.message || "unknown error");
+    console.error("solve-problem failed:", message);
+
+    // APIキー自体は返さず、設定確認に必要な原因だけを分類します。
+    let errorMessage = "Gemini APIとの通信に失敗しました。Vercelの設定を確認してください";
+    if (/not found|not supported|model/i.test(message)) {
+      errorMessage = `Geminiモデルを利用できません。GEMINI_MODELを「${MODEL}」に設定してください`;
+    } else if (/api key|permission|unauthorized|401|403/i.test(message)) {
+      errorMessage = "Gemini APIキーが無効、またはAPIの利用権限がありません。VercelのProduction環境変数を確認してください";
+    } else if (/quota|rate limit|429|resource exhausted/i.test(message)) {
+      errorMessage = "Gemini APIの利用上限に達した可能性があります。Google AI Studioの利用状況を確認してください";
+    } else if (/json|unexpected token/i.test(message)) {
+      errorMessage = "Geminiの回答形式を読み取れませんでした。もう一度画像を解析してください";
+    }
+    return response.status(502).json({ error: errorMessage });
   }
 }
