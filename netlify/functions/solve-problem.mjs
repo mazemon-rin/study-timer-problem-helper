@@ -15,6 +15,7 @@ export default async (request) => {
     const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
     const result = await ai.models.generateContent({
       model: MODEL,
+      config: { responseMimeType: "application/json" },
       contents: [{
         role: "user",
         parts: [
@@ -23,8 +24,11 @@ export default async (request) => {
         ]
       }]
     });
-    const text = String(result.text || "").replace(/^```json\s*|\s*```$/g, "").trim();
-    return Response.json(JSON.parse(text));
+    const raw = String(result.text || "").trim();
+    const start = raw.indexOf("{");
+    const end = raw.lastIndexOf("}");
+    if (start < 0 || end <= start) throw new Error("Gemini returned no JSON");
+    return Response.json(JSON.parse(raw.slice(start, end + 1)));
   } catch (error) {
     console.error("solve-problem failed:", error?.message || "unknown error");
     return Response.json({ error: "問題を解析できませんでした。API設定と画像を確認してください" }, { status: 500 });
