@@ -13,7 +13,7 @@ export default async function handler(request, response) {
     if (!match || match[2].length > 8_000_000) return response.status(413).json({ error: "画像が大きすぎるか、形式に対応していません" });
     if (!process.env.GEMINI_API_KEY) return response.status(500).json({ error: "VercelにGEMINI_API_KEYが登録されていません" });
     const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-    const request = {
+    const generationRequest = {
       config: { responseMimeType: "application/json" },
       contents: [{ role: "user", parts: [
         { text: `${prompt} 科目:${body.subject || "AIに判断してもらう"}` },
@@ -22,11 +22,11 @@ export default async function handler(request, response) {
     };
     let result;
     try {
-      result = await ai.models.generateContent({ ...request, model: MODEL });
+      result = await ai.models.generateContent({ ...generationRequest, model: MODEL });
     } catch (error) {
       if (!/503|high demand|unavailable/i.test(String(error?.message || "")) || MODEL === FALLBACK_MODEL) throw error;
       console.warn(`Gemini model busy; retrying with ${FALLBACK_MODEL}`);
-      result = await ai.models.generateContent({ ...request, model: FALLBACK_MODEL });
+      result = await ai.models.generateContent({ ...generationRequest, model: FALLBACK_MODEL });
     }
     const raw = String(result.text || "").trim();
     const start = raw.indexOf("{");
