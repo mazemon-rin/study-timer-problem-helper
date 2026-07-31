@@ -22,3 +22,4 @@ function renderRecords(){const tm=minutes();$("recordToday").textContent=`${tm}�
 if(state.timer.running&&!state.timer.startedAt){state.timer.running=false}setInterval(tick,1000);tick();
 
 $("deleteAllQuestionsButton").onclick=()=>{if(!state.questions.length)return;if(confirm("保存した問題をすべて削除しますか？")){state.questions=[];save(keys.questions,state.questions);renderReviews();renderTimer()}};
+$("saveDataButton").onclick=()=>{const backup={schemaVersion:APP_CONFIG.schemaVersion,sourceApp:APP_CONFIG.sourceApp,exportedAt:new Date().toISOString(),records:state.records,questions:state.questions,timer:state.timer};const blob=new Blob([JSON.stringify(backup,null,2)],{type:"application/json"}),url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download="study-support-backup-"+today()+".json";a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);$("saveDataStatus").textContent="データを保存しました";setTimeout(()=>$("saveDataStatus").textContent="",3000)};
