@@ -1,11 +1,11 @@
-# 学習タイマー問題解説アプリ
+# 問題解説アプリ
 
-スマートフォンで学習時間を測り、問題画像をGeminiで解析して復習保存する個人向けWebアプリです。
+スマートフォンで問題画像をGeminiで解析し、回答と追加質問を復習保存する個人向けWebアプリです。
 
 ## 構成
 
 - `index.html` / `style.css`: 画面
-- `app.js`: タイマー、画像、復習、記録
+- `app.js`: 画像解析、追加質問、復習
 - `config.js`: 変更しやすい設定値
 - `netlify/functions/solve-problem.mjs`: APIキーを隠してGeminiへ接続
 

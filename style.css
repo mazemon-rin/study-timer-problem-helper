@@ -5,6 +5,3 @@
 .review-heading{display:flex;align-items:center;justify-content:space-between;gap:12px}.review-heading h2{margin:0}.review-heading .quiet{color:#b33b3b}@media(max-width:420px){.review-heading{align-items:flex-start;flex-direction:column}}
 .follow-up{border-top:1px solid #e1e6ef;margin-top:18px;padding-top:14px}.follow-up-row{display:flex;gap:8px;margin-top:6px}.follow-up-row input{flex:1;min-width:0}.follow-up-row button{white-space:nowrap}.follow-up-item{background:#f5f7fb;border-radius:10px;padding:10px;margin-top:8px}.follow-up-item p{margin:4px 0 0}
 
-.save-data-button{width:100%;margin:1rem 0 .25rem;border:1px solid var(--border-color,#cbd5e1);background:transparent;color:inherit}
-.save-data-button:hover{background:rgba(37,99,235,.08)}
-.save-data-status{min-height:1.25rem;margin:.25rem 0 0;text-align:center;color:var(--accent,#2563eb);font-size:.9rem}
